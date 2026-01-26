@@ -3,26 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>High 1 Ski Trip 2026</title>
+    <title>High 1+3滑雪之旅 2026</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;500;900&display=swap');
+
         body {
-            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
-            background-color: #f0f9ff;
-            color: #475569;
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #334155;
+            min-height: 100vh;
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
         }
 
         .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 28px;
-            box-shadow: 0 10px 30px rgba(148, 163, 184, 0.12);
+            box-shadow: 0 8px 32px rgba(186, 230, 253, 0.3);
         }
 
         .snowflake {
@@ -42,500 +45,537 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(to bottom, transparent, #ffffff 50%);
+            background: linear-gradient(to top, #ffffff 85%, rgba(255,255,255,0));
             z-index: 40;
-            transition: height 1.5s ease-out;
+            transition: height 0.5s linear;
+            border-radius: 60% 60% 0 0 / 15px 15px 0 0;
             pointer-events: none;
         }
 
-        .snowman-family {
+        .snowman-container {
             position: fixed;
-            bottom: 100px;
-            left: 0;
-            width: 100%;
-            height: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 10px;
-            z-index: 60;
-            pointer-events: none;
-        }
-
-        .snowman-item {
-            transform: scale(0);
-            transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
             cursor: pointer;
-            opacity: 0;
-            pointer-events: auto;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .snowman-item.appear { transform: scale(var(--scale)); opacity: 1; }
-        .snowman-item.dissipate { transform: scale(0); opacity: 0; pointer-events: none; }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        select {
+        input, textarea, select {
+            background: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid rgba(186, 230, 253, 0.5) !important;
+            border-radius: 16px !important;
+            outline: none !important;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 1em;
+        }
+
+        .category-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
         }
     </style>
 </head>
 <body class="pb-32">
 
 <div id="app">
-    <!-- 背景下雪特效 -->
-    <div v-for="s in snowflakes" :key="s.id" class="snowflake" :style="s.style">
-        <i class="fas fa-snowflake"></i>
-    </div>
-
-    <!-- 底部積雪 -->
+    <!-- 背景與特效 -->
+    <div v-for="s in snowflakes" :key="s.id" class="snowflake" :style="s.style"><i class="fas fa-snowflake"></i></div>
     <div class="snow-ground" :style="{ height: snowHeight + 'px' }"></div>
-
-    <!-- 4 隻雪人 -->
-    <div class="snowman-family">
-        <div v-for="(sm, index) in snowmen" :key="index" 
-             class="snowman-item" 
-             :class="{ appear: showSnowman, dissipate: isDissipating }"
-             :style="{ '--scale': sm.scale, marginBottom: sm.offset + 'px' }"
-             @click="handleSnowmanClick">
-            <svg width="80" height="100" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M50 110C75 110 90 95 90 75C90 55 75 45 50 45C25 45 10 55 10 75C10 95 25 110 50 110Z" stroke="#cbd5e1" stroke-width="2" fill="white" />
-                <path d="M50 45C65 45 75 35 75 25C75 15 65 5 50 5C35 5 25 15 25 25C25 35 35 45 50 45Z" stroke="#cbd5e1" stroke-width="2" fill="white" />
-                <circle cx="40" cy="22" r="2" fill="#64748b" />
-                <circle cx="60" cy="22" r="2" fill="#64748b" />
-                <path d="M50 28L54 32L50 34Z" fill="#fb923c" />
-                <path :d="sm.scarfPath" :stroke="sm.scarfColor" stroke-width="3" stroke-linecap="round" />
-            </svg>
-        </div>
+    
+    <!-- 雪人 -->
+    <div v-if="showSnowman" class="snowman-container" @click="handleSnowmanClick" :class="{ 'scale-0 opacity-0': isDissipating }">
+        <svg width="70" height="90" viewBox="0 0 100 120">
+            <circle cx="50" cy="85" r="30" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+            <circle cx="50" cy="35" r="22" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+            <circle cx="43" cy="30" r="2.5" fill="#475569"/>
+            <circle cx="57" cy="30" r="2.5" fill="#475569"/>
+            <path d="M50 35 L65 38 L50 41 Z" fill="#fb923c"/>
+            <circle cx="38" cy="38" r="4" fill="#fecdd3" opacity="0.6"/>
+            <circle cx="62" cy="38" r="4" fill="#fecdd3" opacity="0.6"/>
+            <path d="M32 50 Q50 58 68 50 L65 55 Q50 63 35 55 Z" fill="#f43f5e"/>
+        </svg>
     </div>
 
-    <!-- 頂部狀態 -->
-    <header class="p-6 pt-12 relative z-50">
-        <div class="glass p-5 flex justify-between items-center bg-white/80">
-            <div>
-                <p class="text-[10px] text-blue-400 font-black tracking-widest uppercase mb-1">
-                    <i class="fas fa-location-arrow"></i> {{ weather.city }}
-                </p>
-                <h2 class="text-3xl font-black text-slate-700">{{ weather.temp }}°C <span class="text-sm font-normal text-slate-400">{{ weather.desc }}</span></h2>
+    <!-- Header -->
+    <header class="p-6 pt-12 relative z-50 max-w-md mx-auto text-center">
+        <h1 class="text-4xl font-black text-blue-600 leading-tight">High 1+3滑雪之旅</h1>
+        <p class="text-slate-400 text-xs font-bold tracking-widest mt-1">SEOUL & GANGWON-DO 2026</p>
+        
+        <div class="glass mt-6 p-4 flex justify-between items-center">
+            <div class="text-left">
+                <p class="text-[10px] text-blue-500 font-black uppercase">Weather</p>
+                <p class="text-2xl font-black text-slate-700">{{ weather.temp }}°C <span class="text-sm font-medium text-slate-400">{{ weather.desc }}</span></p>
             </div>
             <div class="text-right">
-                <p class="text-[10px] font-bold text-pink-300 uppercase">2026 Winter</p>
-                <p class="text-xs font-black text-slate-500">Ski Trip</p>
+                <p class="text-xs font-bold text-blue-300">FEB 25 - MAR 01</p>
             </div>
         </div>
     </header>
 
-    <!-- 主要內容區 -->
-    <main class="px-6 space-y-6 relative z-10">
-        
-        <!-- 班機資訊 (分組版) -->
+    <!-- Main -->
+    <main class="px-4 space-y-6 max-w-md mx-auto relative z-10">
+        <div class="flex items-center gap-3 px-2">
+            <div class="w-1 h-6 bg-blue-500 rounded-full"></div>
+            <h2 class="text-xl font-black text-slate-800">{{ currentTabName }}</h2>
+        </div>
+
+        <!-- 航班資訊 (FLIGHT) -->
         <div v-if="activeTab === 'flight'" class="space-y-4">
-            <div class="flex justify-between items-center px-1">
-                <h3 class="text-lg font-black text-slate-700">✈️ 航班資訊</h3>
-                <button @click="openModal('flight_group', null)" class="text-blue-500 text-xs font-bold"><i class="fas fa-plus-circle mr-1"></i>新增群組</button>
-            </div>
-
-            <!-- 群組選擇器 -->
-            <div class="relative">
-                <select v-model="selectedFlightGroupId" class="w-full glass bg-white/60 p-4 text-sm font-bold outline-none border-none">
-                    <option v-for="group in flightGroups" :key="group.id" :value="group.id">
-                        {{ group.name }} ({{ group.members }})
-                    </option>
+            <div class="flex gap-2 items-center">
+                <select v-model="selectedFlightGroup" class="flex-1 p-4 glass text-blue-600 font-bold text-sm">
+                    <option v-for="(name, key) in groupNames" :key="key" :value="key">{{ name }}</option>
                 </select>
+                <button @click="openGroupEditModal" class="glass p-4 text-blue-500 hover:text-blue-700">
+                    <i class="fas fa-edit"></i>
+                </button>
             </div>
-
-            <!-- 選中的航班內容 -->
-            <div v-if="currentFlightGroup" class="glass p-6 bg-white/60 space-y-8 relative overflow-hidden group/card">
-                <!-- 去程 -->
-                <div class="relative group/item">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="text-[10px] font-bold text-blue-400 uppercase">去程 {{ currentFlightGroup.outbound.date }}</p>
-                        <button @click="openModal('flight', 'outbound')" class="opacity-0 group-hover/item:opacity-100 transition-opacity text-slate-300 hover:text-blue-500"><i class="fas fa-edit text-xs"></i></button>
-                    </div>
-                    <div class="flex justify-between items-center text-center">
-                        <div class="w-1/3"><p class="text-2xl font-black">{{ currentFlightGroup.outbound.fromCode }}</p><p class="text-[10px] text-slate-400">{{ currentFlightGroup.outbound.fromTime }}</p></div>
-                        <div class="flex-1 px-4"><div class="w-full h-[2px] bg-blue-100 relative"><i class="fas fa-plane absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-blue-300"></i></div></div>
-                        <div class="w-1/3"><p class="text-2xl font-black">{{ currentFlightGroup.outbound.toCode }}</p><p class="text-[10px] text-slate-400">{{ currentFlightGroup.outbound.toTime }}</p></div>
+            
+            <div v-for="(f, idx) in flightData[selectedFlightGroup]" :key="idx" class="glass p-5 border-l-8 border-l-blue-400 relative">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[10px] font-black px-2 py-1 bg-blue-50 text-blue-600 rounded-full">{{ f.type }} {{ f.date }}</span>
+                    <div class="flex gap-2">
+                        <button @click="editItem('flight', idx)" class="text-slate-300 hover:text-blue-500 text-xs transition-colors"><i class="fas fa-edit"></i></button>
+                        <button @click="deleteItem('flight', idx)" class="text-slate-300 hover:text-red-500 text-xs transition-colors"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-
-                <!-- 回程 -->
-                <div class="relative group/item">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="text-[10px] font-bold text-pink-400 uppercase">回程 {{ currentFlightGroup.inbound.date }}</p>
-                        <button @click="openModal('flight', 'inbound')" class="opacity-0 group-hover/item:opacity-100 transition-opacity text-slate-300 hover:text-pink-500"><i class="fas fa-edit text-xs"></i></button>
+                <div class="flex justify-between items-center text-center">
+                    <div>
+                        <p class="text-xl font-black">{{ f.depTime }}</p>
+                        <p class="text-[10px] text-blue-500 font-bold">{{ f.depCode }}</p>
                     </div>
-                    <div class="flex justify-between items-center text-center">
-                        <div class="w-1/3"><p class="text-2xl font-black">{{ currentFlightGroup.inbound.fromCode }}</p><p class="text-[10px] text-slate-400">{{ currentFlightGroup.inbound.fromTime }}</p></div>
-                        <div class="flex-1 px-4"><div class="w-full h-[2px] bg-pink-100 relative rotate-180"><i class="fas fa-plane absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-pink-300"></i></div></div>
-                        <div class="w-1/3"><p class="text-2xl font-black">{{ currentFlightGroup.inbound.toCode }}</p><p class="text-[10px] text-slate-400">{{ currentFlightGroup.inbound.toTime }}</p></div>
-                    </div>
-                </div>
-
-                <!-- 編輯群組名稱/成員按鈕 -->
-                <div class="pt-4 mt-4 border-t border-slate-100 flex justify-between">
-                    <button @click="openModal('flight_group', selectedFlightGroupId)" class="text-[10px] font-bold text-slate-400 hover:text-blue-500">
-                        <i class="fas fa-cog mr-1"></i>設定群組名稱與成員
-                    </button>
-                    <button v-if="flightGroups.length > 1" @click="deleteItem('flight_group', selectedFlightGroupId)" class="text-[10px] font-bold text-red-300 hover:text-red-500">
-                        <i class="fas fa-trash-alt mr-1"></i>刪除此組
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 行程表 -->
-        <div v-if="activeTab === 'itinerary'" class="space-y-4">
-            <div class="flex justify-between items-center px-1">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar py-2">
-                    <button v-for="day in days" :key="day.id" @click="selectedDay = day.id" 
-                        :class="['px-4 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0', selectedDay === day.id ? 'bg-blue-500 text-white shadow-md' : 'glass text-slate-400']">
-                        {{ day.label }}
-                    </button>
-                </div>
-                <button @click="openModal('itinerary', null)" class="ml-2 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg flex-shrink-0"><i class="fas fa-plus"></i></button>
-            </div>
-
-            <div class="space-y-4">
-                <div v-for="(item, index) in currentSchedule" :key="index" class="flex gap-4 group">
-                    <div class="w-12 pt-1 text-right text-[10px] font-black text-blue-400">{{ item.time }}</div>
-                    <div class="flex-1 glass p-4 bg-white/70 relative">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-slate-700">{{ item.title }}</h4>
-                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button @click="openNaverMap(item.title)" class="text-green-500"><i class="fas fa-map-marked-alt text-xs"></i></button>
-                                <button @click="openModal('itinerary', index)" class="text-slate-300 hover:text-blue-400"><i class="fas fa-edit text-xs"></i></button>
-                                <button @click="deleteItem('itinerary', index)" class="text-slate-300 hover:text-red-400"><i class="fas fa-trash text-xs"></i></button>
-                            </div>
+                    <div class="flex-1 px-4">
+                        <div class="h-[1px] bg-blue-100 relative">
+                            <i class="fas fa-plane text-[10px] text-blue-200 absolute -top-1 left-1/2 -translate-x-1/2"></i>
                         </div>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed whitespace-pre-wrap">{{ item.desc }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-black">{{ f.arrTime }}</p>
+                        <p class="text-[10px] text-blue-500 font-bold">{{ f.arrCode }}</p>
                     </div>
                 </div>
             </div>
+
+            <button @click="openModal('flight')" class="w-full py-4 border-2 border-dashed border-blue-200 rounded-2xl text-blue-300 text-xs font-bold hover:bg-blue-50 transition-colors">+ 新增班機</button>
         </div>
 
-        <!-- 記帳功能 -->
-        <div v-if="activeTab === 'wallet'" class="space-y-4">
-            <div class="glass p-6 bg-indigo-500 text-white shadow-lg">
-                <p class="text-xs opacity-80 font-bold mb-1">總支出 (KRW)</p>
-                <div class="flex justify-between items-end">
-                    <h2 class="text-4xl font-black">₩ {{ totalSpent.toLocaleString() }}</h2>
-                    <button @click="openModal('wallet', null)" class="bg-white/20 p-2 rounded-xl text-xs backdrop-blur-md">新增支出</button>
+        <!-- 行程表 (PLAN) -->
+        <div v-if="activeTab === 'itinerary'" class="space-y-4">
+            <div class="flex justify-center w-full">
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 max-w-full justify-start sm:justify-center">
+                    <button v-for="d in days" :key="d" @click="selectedDay = d" 
+                        :class="['px-5 py-2 rounded-full text-xs font-bold flex-shrink-0 transition-all shadow-sm', selectedDay === d ? 'bg-blue-600 text-white ring-4 ring-blue-100' : 'glass text-slate-400 hover:bg-white']">
+                        {{ d }}
+                    </button>
                 </div>
+            </div>
+
+            <div v-for="(item, idx) in itineraryData[selectedDay]" :key="idx" class="flex gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div class="w-12 text-right text-[10px] font-black text-blue-400 pt-1 leading-tight flex-shrink-0">{{ item.time }}</div>
+                <div class="flex-1 glass p-4 bg-white/70 border-l-4 border-l-blue-400 min-w-0">
+                    <div class="flex justify-between items-start gap-2">
+                        <h4 class="font-black text-slate-700 text-sm flex-1 break-words">{{ item.title }}</h4>
+                        <div class="flex gap-2 flex-shrink-0 pt-0.5">
+                            <a :href="'https://map.naver.com/v5/search/' + encodeURIComponent(item.title)" target="_blank" class="text-green-500 text-xs hover:scale-125 transition-transform"><i class="fas fa-location-dot"></i></a>
+                            <button @click="editItem('itinerary', idx)" class="text-slate-300 text-xs hover:text-blue-400"><i class="fas fa-edit"></i></button>
+                            <button @click="deleteItem('itinerary', idx)" class="text-slate-300 text-xs hover:text-red-400"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed whitespace-pre-line">{{ item.desc }}</p>
+                </div>
+            </div>
+            
+            <button @click="openModal('itinerary')" class="w-full py-4 border-2 border-dashed border-blue-200 rounded-2xl text-blue-300 text-xs font-bold hover:bg-blue-50 transition-colors">+ 加入行程</button>
+        </div>
+
+        <!-- 支出帳本 (WALLET) -->
+        <div v-if="activeTab === 'wallet'" class="space-y-4">
+            <div class="glass p-6 bg-gradient-to-br from-blue-700 via-indigo-600 to-blue-500 text-white border-none shadow-xl shadow-blue-200 relative overflow-hidden">
+                <div class="absolute top-[-20px] right-[-20px] opacity-10 rotate-12">
+                    <i class="fas fa-snowflake text-[120px]"></i>
+                </div>
+                <div class="flex justify-between items-center mb-4 relative z-10">
+                    <div class="px-3 py-1 bg-white/20 rounded-full backdrop-blur-md">
+                        <p class="text-[10px] font-black uppercase tracking-widest">Total Expenses</p>
+                    </div>
+                    <i class="fas fa-credit-card text-white/50"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-baseline gap-2 mb-1">
+                        <span class="text-lg font-bold opacity-80">₩</span>
+                        <h2 class="text-4xl font-black tracking-tight">{{ totalExpensesKRW.toLocaleString() }}</h2>
+                    </div>
+                    <div class="flex items-baseline gap-1 opacity-70">
+                        <span class="text-xs font-bold">≈ TWD $</span>
+                        <span class="text-xl font-black">{{ totalExpensesTWD.toLocaleString() }}</span>
+                    </div>
+                </div>
+                <div class="mt-6 relative z-10">
+                    <div class="flex h-2 w-full bg-black/10 rounded-full overflow-hidden">
+                        <div v-for="cat in categorySummaries" :key="cat.name" 
+                            :style="{ width: cat.percent + '%', backgroundColor: cat.color }"
+                            class="h-full transition-all duration-500">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+                        <div v-for="cat in categorySummaries" :key="cat.name" class="flex items-center text-[9px] font-bold" v-show="cat.percent > 0">
+                            <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
+                            <span class="opacity-80">{{ cat.name }}</span>
+                            <span class="ml-1 opacity-50">{{ cat.percent }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div v-for="(bill, idx) in bills" :key="idx" class="glass p-4 flex justify-between items-center animate-in slide-in-from-right-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase" 
+                                  :style="{ backgroundColor: getCategoryColor(bill.category) + '22', color: getCategoryColor(bill.category) }">
+                                {{ bill.category }}
+                            </span>
+                            <p class="text-sm font-black text-slate-700">{{ bill.desc }}</p>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{{ bill.date }}</p>
+                    </div>
+                    <div class="text-right mr-4">
+                        <p class="text-sm font-black text-blue-600">
+                            {{ bill.currency === 'TWD' ? '$' : '₩' }} {{ bill.amount.toLocaleString() }}
+                        </p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="editItem('wallet', idx)" class="text-slate-300 hover:text-blue-400 transition-colors"><i class="fas fa-edit text-xs"></i></button>
+                        <button @click="deleteItem('wallet', idx)" class="text-slate-300 hover:text-red-400 transition-colors"><i class="fas fa-trash text-xs"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button @click="openModal('wallet')" class="w-full py-4 border-2 border-dashed border-blue-200 rounded-2xl text-blue-300 text-xs font-bold hover:bg-blue-50 transition-colors">+ 新增支出</button>
+        </div>
+
+        <!-- 備忘錄 (MEMO) -->
+        <div v-if="activeTab === 'memo'" class="space-y-4">
+            <div class="glass p-5 space-y-3">
+                <textarea v-model="newMemoContent" placeholder="在此輸入備忘內容..." rows="3" class="w-full p-4 text-sm"></textarea>
+                <button @click="addMemo" class="w-full py-3 bg-blue-500 text-white rounded-2xl font-black text-sm shadow-md">
+                    <i class="fas fa-plus mr-2"></i>記錄備忘
+                </button>
             </div>
             <div class="space-y-3">
-                <div v-for="(bill, index) in bills" :key="index" class="glass p-4 bg-white/70 group flex justify-between items-center">
-                    <div>
-                        <p class="text-xs font-bold text-slate-700">{{ bill.desc }}</p>
-                        <p class="text-[10px] text-slate-400">{{ bill.category }}</p>
+                <div v-for="(m, idx) in memos" :key="idx" class="glass p-4 group animate-in zoom-in-95">
+                    <div class="flex justify-between items-start gap-3">
+                        <p class="text-sm text-slate-700 leading-relaxed flex-1">{{ m.content }}</p>
+                        <button @click="deleteMemo(idx)" class="text-slate-300 hover:text-red-400 transition-colors p-1">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <p class="font-mono text-sm font-bold text-indigo-500">₩ {{ bill.amount.toLocaleString() }}</p>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100">
-                            <button @click="openModal('wallet', index)" class="text-slate-300 hover:text-blue-400"><i class="fas fa-edit text-xs"></i></button>
-                            <button @click="deleteItem('wallet', index)" class="text-slate-300 hover:text-red-400"><i class="fas fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
+                    <p class="text-[9px] text-slate-300 mt-2 font-bold">{{ m.date }}</p>
                 </div>
             </div>
         </div>
-
-        <!-- 備忘錄 -->
-        <div v-if="activeTab === 'memo'" class="space-y-4">
-            <div class="flex justify-between items-center px-1">
-                <h3 class="text-lg font-black text-slate-700">✍️ 旅遊備忘錄</h3>
-                <button @click="openModal('memo', null)" class="bg-pink-400 text-white px-4 py-1 rounded-full text-xs font-bold shadow-md">寫日記</button>
-            </div>
-            <div class="space-y-4">
-                <div v-for="(diary, index) in diaries" :key="index" class="glass p-5 bg-white/70 group">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-black text-pink-400 px-2 py-1 bg-pink-50 rounded-lg">{{ diary.date }}</span>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100">
-                            <button @click="openModal('memo', index)" class="text-slate-300 hover:text-blue-400"><i class="fas fa-edit text-xs"></i></button>
-                            <button @click="deleteItem('memo', index)" class="text-slate-300 hover:text-red-400"><i class="fas fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
-                    <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{{ diary.content }}</p>
-                </div>
-            </div>
-        </div>
-
     </main>
 
-    <!-- 彈窗 Modal -->
-    <div v-if="showModal" class="fixed inset-0 z-[200] flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showModal = false"></div>
-        <div class="glass w-full max-w-sm p-6 bg-white relative z-10">
-            <h3 class="text-lg font-black mb-4">{{ modalTitle }}</h3>
+    <!-- Modal 彈窗 -->
+    <div v-if="showModal" class="fixed inset-0 z-[300] flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showModal = false"></div>
+        <div class="glass w-full max-w-sm p-8 bg-white relative z-10 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-black mb-6 text-slate-800">{{ modalTitle }}</h3>
             
-            <!-- 編輯分組基本資訊 (名稱/成員) -->
-            <div v-if="modalType === 'flight_group'" class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">群組名稱</label>
-                    <input v-model="form.name" placeholder="如：第一組 / 長榮航空組" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">包含成員</label>
-                    <input v-model="form.members" placeholder="如：小明, 阿華" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                </div>
+            <div v-if="modalType === 'groupName'" class="space-y-3">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">機場/出發地顯示名稱</div>
+                <input v-model="groupNameTemp" class="w-full p-4 text-sm font-bold">
             </div>
 
-            <!-- 編輯航班細節 -->
-            <div v-if="modalType === 'flight'" class="space-y-4">
-                <div><label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">日期</label>
-                <input v-model="form.date" placeholder="如 2/25" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100"></div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">起飛城市代碼</label>
-                    <input v-model="form.fromCode" placeholder="TSA" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100 uppercase"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">起飛時間</label>
-                    <input v-model="form.fromTime" type="time" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">到達城市代碼</label>
-                    <input v-model="form.toCode" placeholder="GMP" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100 uppercase"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">到達時間</label>
-                    <input v-model="form.toTime" type="time" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100"></div>
-                </div>
+            <div v-if="modalType === 'itinerary'" class="space-y-3">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Time</div>
+                <input v-model="form.time" placeholder="例如 17:30" class="w-full p-4 text-sm">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Location</div>
+                <input v-model="form.title" placeholder="地點名稱" class="w-full p-4 text-sm">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Note</div>
+                <textarea v-model="form.desc" placeholder="詳細內容..." rows="3" class="w-full p-4 text-sm"></textarea>
             </div>
 
-            <!-- 編輯行程 -->
-            <div v-if="modalType === 'itinerary'" class="space-y-4">
-                <input v-model="form.time" type="time" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                <input v-model="form.title" placeholder="地點/標題" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                <textarea v-model="form.desc" placeholder="詳細內容..." rows="3" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100"></textarea>
-            </div>
-
-            <!-- 編輯記帳 -->
-            <div v-if="modalType === 'wallet'" class="space-y-4">
-                <input v-model.number="form.amount" type="number" placeholder="金額 (KRW)" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                <input v-model="form.desc" placeholder="支出說明" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                <select v-model="form.category" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                    <option>餐飲</option><option>交通</option><option>滑雪相關</option><option>購物</option><option>其他</option>
+            <div v-if="modalType === 'wallet'" class="space-y-3">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Date</div>
+                <input type="date" v-model="form.date" class="w-full p-4 text-sm font-bold">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Category</div>
+                <select v-model="form.category" class="w-full p-4 text-sm font-bold">
+                    <option v-for="cat in walletCategories" :key="cat" :value="cat">{{ cat }}</option>
                 </select>
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Description</div>
+                <input v-model="form.desc" placeholder="例如：晚餐、咖啡" class="w-full p-4 text-sm">
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Currency</div>
+                        <select v-model="form.currency" class="w-full p-4 text-sm font-bold">
+                            <option value="KRW">KRW</option>
+                            <option value="TWD">TWD</option>
+                        </select>
+                    </div>
+                    <div class="flex-[1.5]">
+                        <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Amount</div>
+                        <input type="number" v-model="form.amount" placeholder="金額" class="w-full p-4 text-sm font-black">
+                    </div>
+                </div>
             </div>
 
-            <!-- 編輯日記 -->
-            <div v-if="modalType === 'memo'" class="space-y-4">
-                <input v-model="form.date" type="date" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100">
-                <textarea v-model="form.content" placeholder="寫點什麼..." rows="4" class="w-full p-3 rounded-xl bg-slate-50 text-sm outline-none border border-slate-100"></textarea>
+            <div v-if="modalType === 'flight'" class="space-y-3">
+                <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Type & Date</div>
+                <div class="flex gap-2">
+                    <select v-model="form.type" class="flex-1 p-4 text-sm font-bold"><option>去程</option><option>回程</option></select>
+                    <input v-model="form.date" placeholder="2/25" class="flex-1 p-4 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Dep Time / Code</div>
+                        <input v-model="form.depTime" placeholder="13:30" class="w-full p-4 text-sm mb-2">
+                        <input v-model="form.depCode" placeholder="TPE" class="w-full p-4 text-sm">
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 px-1 uppercase">Arr Time / Code</div>
+                        <input v-model="form.arrTime" placeholder="17:30" class="w-full p-4 text-sm mb-2">
+                        <input v-model="form.arrCode" placeholder="ICN" class="w-full p-4 text-sm">
+                    </div>
+                </div>
             </div>
 
-            <div class="flex gap-2 pt-2">
-                <button @click="showModal = false" class="flex-1 py-3 text-slate-400 font-bold">取消</button>
-                <button @click="saveData" class="flex-1 py-3 bg-blue-500 text-white rounded-xl font-bold shadow-lg">儲存</button>
+            <div class="flex gap-3 mt-6">
+                <button @click="showModal = false" class="flex-1 py-4 text-slate-400 font-bold">取消</button>
+                <button @click="saveData" class="flex-1 py-4 bg-blue-500 text-white rounded-2xl font-black shadow-lg shadow-blue-200">儲存</button>
             </div>
         </div>
     </div>
 
-    <!-- 底部導覽 -->
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass p-2 flex justify-around items-center z-[150] bg-white/90">
-        <button @click="activeTab = 'flight'" :class="['p-3 flex flex-col items-center gap-1 transition-all', activeTab === 'flight' ? 'text-blue-500 scale-110' : 'text-slate-300']">
-            <i class="fas fa-plane"></i><span class="text-[9px] font-black">航班</span>
-        </button>
-        <button @click="activeTab = 'itinerary'" :class="['p-3 flex flex-col items-center gap-1 transition-all', activeTab === 'itinerary' ? 'text-blue-500 scale-110' : 'text-slate-300']">
-            <i class="fas fa-calendar-alt"></i><span class="text-[9px] font-black">行程</span>
-        </button>
-        <button @click="activeTab = 'wallet'" :class="['p-3 flex flex-col items-center gap-1 transition-all', activeTab === 'wallet' ? 'text-blue-500 scale-110' : 'text-slate-300']">
-            <i class="fas fa-wallet"></i><span class="text-[9px] font-black">記帳</span>
-        </button>
-        <button @click="activeTab = 'memo'" :class="['p-3 flex flex-col items-center gap-1 transition-all', activeTab === 'memo' ? 'text-blue-500 scale-110' : 'text-slate-300']">
-            <i class="fas fa-book"></i><span class="text-[9px] font-black">備忘</span>
+    <!-- Nav 底部導航 -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md glass p-2 flex justify-around items-center z-[150] shadow-2xl">
+        <button v-for="t in tabs" :key="t.id" @click="activeTab = t.id" 
+            :class="['p-3 flex flex-col items-center gap-1 transition-all duration-300 flex-1', activeTab === t.id ? 'text-blue-600 scale-110' : 'text-slate-300']">
+            <i :class="[t.icon, 'text-base']"></i><span class="text-[8px] font-black uppercase tracking-tighter">{{ t.name }}</span>
         </button>
     </nav>
 </div>
 
 <script>
     const { createApp, ref, onMounted, computed } = Vue;
-
     createApp({
         setup() {
             const activeTab = ref('itinerary');
             const selectedDay = ref('2/25');
+            const selectedFlightGroup = ref('groupA');
             const snowHeight = ref(0);
             const showSnowman = ref(false);
             const isDissipating = ref(false);
             const snowflakes = ref([]);
-            const weather = ref({ city: '江原道 (Pyeongchang)', temp: -7, desc: '大雪' });
-
-            const snowmen = ref([
-                { scale: 0.7, offset: 0, scarfColor: '#cbd5e1', scarfPath: 'M30 42C35 45 65 45 70 42' },
-                { scale: 1.1, offset: 12, scarfColor: '#3b82f6', scarfPath: 'M30 42C35 45 65 45 70 42' },
-                { scale: 0.5, offset: -5, scarfColor: '#f43f5e', scarfPath: 'M30 42C35 45 65 45 70 42' },
-                { scale: 0.9, offset: 5, scarfColor: '#10b981', scarfPath: 'M30 42C35 45 65 45 70 42' }
-            ]);
-
-            const days = [
-                { id: '2/25', label: '2/25' }, { id: '2/26', label: '2/26' },
-                { id: '2/27', label: '2/27' }, { id: '2/28', label: '2/28' }, { id: '3/1', label: '3/1' }
-            ];
-
-            // 預設分組航班資料
-            const defaultFlightGroups = [
-                {
-                    id: Date.now(),
-                    name: '第一組 (長榮)',
-                    members: '小明, 阿華',
-                    outbound: { date: '2/25', fromCode: 'TSA', fromTime: '14:05', toCode: 'GMP', toTime: '17:30' },
-                    inbound: { date: '3/1', fromCode: 'ICN', fromTime: '11:50', toCode: 'HUN', toTime: '13:30' }
-                },
-                {
-                    id: Date.now() + 1,
-                    name: '第二組 (酷航)',
-                    members: '小水',
-                    outbound: { date: '2/25', fromCode: 'TPE', fromTime: '18:10', toCode: 'ICN', toTime: '21:35' },
-                    inbound: { date: '3/1', fromCode: 'ICN', fromTime: '22:45', toCode: 'TPE', toTime: '00:20' }
-                }
-            ];
-
-            const initialSchedule = {
-                '2/25': [{ time: '17:30', title: '金浦機場', desc: '抵達首爾' }, { time: '19:00', title: '天空花園飯店', desc: '辦理入住' }],
-                '2/26': [{ time: '07:00', title: '明洞地鐵站', desc: '集合出發' }, { time: '12:30', title: 'HIGH ONE 滑雪場', desc: '滑雪練習' }],
-                '2/27': [{ time: '09:30', title: 'HIGH ONE 滑雪場', desc: '自由練習' }, { time: '19:00', title: '弘大', desc: '晚餐時間' }],
-                '2/28': [{ time: '14:00', title: '醫美預約', desc: 'Yanghwa-ro' }, { time: '19:00', title: '樂天購物', desc: '採買伴手禮' }],
-                '3/1': [{ time: '11:50', title: '仁川機場', desc: '準備回程' }]
+            const weather = ref({ temp: -8, desc: '下雪中' });
+            const newMemoContent = ref('');
+            
+            const walletCategories = ['餐飲', '交通', '滑雪', '購物', '醫美', '其他'];
+            const categoryColors = {
+                '餐飲': '#fbbf24', '交通': '#60a5fa', '滑雪': '#34d399', '購物': '#f472b6', '醫美': '#c084fc', '其他': '#94a3b8'
             };
 
-            const flightGroups = ref(JSON.parse(localStorage.getItem('ski_flight_groups_v3')) || defaultFlightGroups);
-            const selectedFlightGroupId = ref(flightGroups.value[0].id);
-            const scheduleData = ref(JSON.parse(localStorage.getItem('ski_itinerary_v3')) || initialSchedule);
-            const bills = ref(JSON.parse(localStorage.getItem('ski_bills_v3')) || []);
-            const diaries = ref(JSON.parse(localStorage.getItem('ski_memos_v3')) || [{ date: '2026-02-25', content: '滑雪之旅開始了！' }]);
+            // 預設行程數據匯入
+            const defaultItinerary = {
+                '2/25': [
+                    { time: '17:30', title: '金浦機場 (GMP)', desc: '抵達韓國，辦理入境手續' },
+                    { time: '19:30', title: '天空花園飯店明洞1號店', desc: 'Hotel Skypark Myeongdong 1\n辦理入住並置放行李' }
+                ],
+                '2/26': [
+                    { time: '07:00', title: '明洞地鐵站 2 號出口', desc: '集合出發前往滑雪場' },
+                    { time: '10:00', title: '滑雪店租借滑雪服', desc: '停留時間約 1 小時，挑選合適裝備' },
+                    { time: '11:00', title: '午餐：魷魚豬肉火鍋', desc: '韓式風味火鍋補給體力' },
+                    { time: '12:30', title: 'HIGH ONE 滑雪場', desc: '租借滑雪用具、基本滑雪課程和自由練習 (約 4.5 小時)' },
+                    { time: '17:00', title: '保管器材 & 晚餐：韓式五花肉', desc: '集合並享用正宗韓式燒烤' },
+                    { time: '19:00', title: 'High One 渡假村入住', desc: '自由享用三溫暖、參觀 CASINO 或體驗夜間滑雪' }
+                ],
+                '2/27': [
+                    { time: '08:00', title: '渡假村早餐', desc: '悠閒享用早餐時間' },
+                    { time: '09:30', title: 'HIGH ONE 滑雪場', desc: '上午進階課程 + 下午自由練習 (午餐自理，自由時間約 6 小時)' },
+                    { time: '16:00', title: '退還器材 & 返回首爾', desc: '集合出發，預計車程約 3 小時' },
+                    { time: '19:00', title: '弘大地鐵站', desc: '下車並享用弘大熱門晚餐' },
+                    { time: '22:30', title: 'First Stay 飯店', desc: '入住首爾市區飯店' }
+                ],
+                '2/28': [
+                    { time: '10:00', title: '望遠市場', desc: '體驗傳統市場美食（推薦炸雞丁、糖餅）' },
+                    { time: '14:00', title: 'Yanghwa-ro 醫美體驗', desc: '進行預約好的醫美項目' },
+                    { time: '16:30', title: '漢江公園', desc: '散步、欣賞江景，放鬆心情' },
+                    { time: '19:00', title: '樂天購物中心', desc: '採買零食、化妝品與伴手禮' }
+                ],
+                '3/1': [
+                    { time: '09:00', title: '市區最後採買', desc: '準備前往機場' },
+                    { time: '12:00', title: '前往機場', desc: '搭乘機場巴士或捷運' }
+                ]
+            };
 
-            const currentFlightGroup = computed(() => flightGroups.value.find(g => g.id === selectedFlightGroupId.value));
-            const currentSchedule = computed(() => (scheduleData.value[selectedDay.value] || []).sort((a,b) => a.time.localeCompare(b.time)));
-            const totalSpent = computed(() => bills.value.reduce((s, b) => s + b.amount, 0));
+            const flightData = ref(JSON.parse(localStorage.getItem('trip_flights')) || { groupA: [], groupB: [] });
+            const itineraryData = ref(JSON.parse(localStorage.getItem('trip_itinerary')) || defaultItinerary);
+            const bills = ref(JSON.parse(localStorage.getItem('trip_bills')) || []);
+            const memos = ref(JSON.parse(localStorage.getItem('trip_memos')) || []);
+            const groupNames = ref(JSON.parse(localStorage.getItem('trip_group_names')) || { groupA: '台北松山', groupB: '台北桃園' });
+            const groupNameTemp = ref('');
+
+            const exchangeRate = 40; 
+            const totalExpensesKRW = computed(() => {
+                return bills.value.reduce((total, bill) => {
+                    return total + (bill.currency === 'TWD' ? bill.amount * exchangeRate : bill.amount);
+                }, 0);
+            });
+            const totalExpensesTWD = computed(() => Math.round(totalExpensesKRW.value / exchangeRate));
+
+            const categorySummaries = computed(() => {
+                const totals = {};
+                walletCategories.forEach(c => totals[c] = 0);
+                bills.value.forEach(bill => {
+                    const krwAmount = bill.currency === 'TWD' ? bill.amount * exchangeRate : bill.amount;
+                    totals[bill.category] += krwAmount;
+                });
+                const total = totalExpensesKRW.value || 1;
+                return walletCategories.map(name => ({
+                    name,
+                    percent: Math.round((totals[name] / total) * 100),
+                    color: categoryColors[name]
+                }));
+            });
+
+            const getCategoryColor = (cat) => categoryColors[cat] || '#94a3b8';
+            const currentTabName = computed(() => ({ flight: '航班資訊', itinerary: '行程表', wallet: '支出帳本', memo: '旅遊備忘錄' }[activeTab.value]));
+            const days = ['2/25', '2/26', '2/27', '2/28', '3/1'];
+            const tabs = [
+                {id:'flight', icon:'fas fa-plane', name:'Flight'}, 
+                {id:'itinerary', icon:'fas fa-calendar-alt', name:'Plan'}, 
+                {id:'wallet', icon:'fas fa-wallet', name:'Wallet'},
+                {id:'memo', icon:'fas fa-sticky-note', name:'Memo'}
+            ];
 
             const showModal = ref(false);
             const modalType = ref('');
             const modalTitle = ref('');
-            const editIndex = ref(null);
+            const editIdx = ref(null);
             const form = ref({});
 
-            const openModal = (type, index) => {
+            const openModal = (type) => {
                 modalType.value = type;
-                editIndex.value = index;
-                showModal.value = true;
-                
-                if (type === 'flight_group') {
-                    modalTitle.value = index !== null ? '設定群組資訊' : '新增航班群組';
-                    if (index !== null) {
-                        const target = flightGroups.value.find(g => g.id === index);
-                        form.value = { name: target.name, members: target.members };
-                    } else {
-                        form.value = { name: '', members: '' };
-                    }
-                } else if (type === 'flight') {
-                    modalTitle.value = index === 'outbound' ? '編輯去程航班' : '編輯回程航班';
-                    form.value = { ...currentFlightGroup.value[index] };
-                } else if (type === 'itinerary') {
-                    modalTitle.value = index !== null ? '編輯行程' : '新增行程';
-                    form.value = index !== null ? { ...currentSchedule.value[index] } : { time: '10:00', title: '', desc: '' };
+                editIdx.value = null;
+                if (type === 'itinerary') {
+                    modalTitle.value = '新增行程';
+                    form.value = { time: '', title: '', desc: '' };
                 } else if (type === 'wallet') {
-                    modalTitle.value = index !== null ? '編輯帳目' : '新增支出';
-                    form.value = index !== null ? { ...bills.value[index] } : { amount: 0, desc: '', category: '餐飲' };
-                } else if (type === 'memo') {
-                    modalTitle.value = index !== null ? '編輯日記' : '寫下心情';
-                    form.value = index !== null ? { ...diaries.value[index] } : { date: new Date().toISOString().split('T')[0], content: '' };
+                    modalTitle.value = '新增支出';
+                    form.value = { desc: '', amount: '', currency: 'KRW', category: '餐飲', date: new Date().toISOString().split('T')[0] };
+                } else if (type === 'flight') {
+                    modalTitle.value = '新增班機';
+                    form.value = { type: '去程', date: '2/25', depTime: '', depCode: '', arrTime: '', arrCode: '' };
                 }
+                showModal.value = true;
+            };
+
+            const openGroupEditModal = () => {
+                modalType.value = 'groupName';
+                modalTitle.value = '編輯群組名稱';
+                groupNameTemp.value = groupNames.value[selectedFlightGroup.value];
+                showModal.value = true;
+            };
+
+            const editItem = (type, idx) => {
+                modalType.value = type;
+                editIdx.value = idx;
+                if (type === 'itinerary') {
+                    modalTitle.value = '編輯行程';
+                    form.value = { ...itineraryData.value[selectedDay.value][idx] };
+                } else if (type === 'wallet') {
+                    modalTitle.value = '編輯支出';
+                    form.value = { ...bills.value[idx] };
+                } else if (type === 'flight') {
+                    modalTitle.value = '編輯班機';
+                    form.value = { ...flightData.value[selectedFlightGroup.value][idx] };
+                }
+                showModal.value = true;
             };
 
             const saveData = () => {
-                if (modalType.value === 'flight_group') {
-                    if (editIndex.value !== null) {
-                        const target = flightGroups.value.find(g => g.id === editIndex.value);
-                        target.name = form.value.name;
-                        target.members = form.value.members;
-                    } else {
-                        const newGroup = {
-                            id: Date.now(),
-                            name: form.value.name || '新群組',
-                            members: form.value.members || '全體成員',
-                            outbound: { date: '2/25', fromCode: 'TSA', fromTime: '12:00', toCode: 'GMP', toTime: '15:30' },
-                            inbound: { date: '3/1', fromCode: 'ICN', fromTime: '12:00', toCode: 'TPE', toTime: '14:00' }
-                        };
-                        flightGroups.value.push(newGroup);
-                        selectedFlightGroupId.value = newGroup.id;
-                    }
-                } else if (modalType.value === 'flight') {
-                    currentFlightGroup.value[editIndex.value] = { ...form.value };
+                if (modalType.value === 'groupName') {
+                    groupNames.value[selectedFlightGroup.value] = groupNameTemp.value;
                 } else if (modalType.value === 'itinerary') {
-                    if (!scheduleData.value[selectedDay.value]) scheduleData.value[selectedDay.value] = [];
-                    if (editIndex.value !== null) scheduleData.value[selectedDay.value][editIndex.value] = { ...form.value };
-                    else scheduleData.value[selectedDay.value].push({ ...form.value });
+                    if (editIdx.value !== null) itineraryData.value[selectedDay.value][editIdx.value] = { ...form.value };
+                    else itineraryData.value[selectedDay.value].push({ ...form.value });
+                    itineraryData.value[selectedDay.value].sort((a, b) => a.time.localeCompare(b.time));
                 } else if (modalType.value === 'wallet') {
-                    if (editIndex.value !== null) bills.value[editIndex.value] = { ...form.value };
-                    else bills.value.push({ ...form.value });
-                } else if (modalType.value === 'memo') {
-                    if (editIndex.value !== null) diaries.value[editIndex.value] = { ...form.value };
-                    else diaries.value.push({ ...form.value });
+                    const cleanForm = { ...form.value, amount: Number(form.value.amount) };
+                    if (editIdx.value !== null) bills.value[editIdx.value] = cleanForm;
+                    else bills.value.push(cleanForm);
+                    bills.value.sort((a, b) => b.date.localeCompare(a.date));
+                } else if (modalType.value === 'flight') {
+                    if (editIdx.value !== null) flightData.value[selectedFlightGroup.value][editIdx.value] = { ...form.value };
+                    else flightData.value[selectedFlightGroup.value].push({ ...form.value });
                 }
-                
-                // 統一存檔
-                localStorage.setItem('ski_flight_groups_v3', JSON.stringify(flightGroups.value));
-                localStorage.setItem('ski_itinerary_v3', JSON.stringify(scheduleData.value));
-                localStorage.setItem('ski_bills_v3', JSON.stringify(bills.value));
-                localStorage.setItem('ski_memos_v3', JSON.stringify(diaries.value));
-                
+                syncLocalStorage();
                 showModal.value = false;
             };
 
-            const deleteItem = (type, index) => {
-                if (!confirm('確定刪除？')) return;
-                if (type === 'flight_group') {
-                    flightGroups.value = flightGroups.value.filter(g => g.id !== index);
-                    if (selectedFlightGroupId.value === index) selectedFlightGroupId.value = flightGroups.value[0].id;
-                    localStorage.setItem('ski_flight_groups_v3', JSON.stringify(flightGroups.value));
-                } else if (type === 'itinerary') {
-                    scheduleData.value[selectedDay.value].splice(index, 1);
-                    localStorage.setItem('ski_itinerary_v3', JSON.stringify(scheduleData.value));
-                } else if (type === 'wallet') {
-                    bills.value.splice(index, 1);
-                    localStorage.setItem('ski_bills_v3', JSON.stringify(bills.value));
-                } else if (type === 'memo') {
-                    diaries.value.splice(index, 1);
-                    localStorage.setItem('ski_memos_v3', JSON.stringify(diaries.value));
-                }
+            const deleteItem = (type, idx) => {
+                if (!confirm('確定刪除嗎？')) return;
+                if (type === 'itinerary') itineraryData.value[selectedDay.value].splice(idx, 1);
+                else if (type === 'wallet') bills.value.splice(idx, 1);
+                else if (type === 'flight') flightData.value[selectedFlightGroup.value].splice(idx, 1);
+                syncLocalStorage();
             };
 
-            const openNaverMap = (loc) => { window.open(`https://map.naver.com/v5/search/${encodeURIComponent(loc)}`, '_blank'); };
+            const addMemo = () => {
+                if (!newMemoContent.value.trim()) return;
+                const now = new Date();
+                const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                memos.value.unshift({ content: newMemoContent.value, date: dateStr });
+                newMemoContent.value = '';
+                syncLocalStorage();
+            };
+
+            const deleteMemo = (idx) => {
+                memos.value.splice(idx, 1);
+                syncLocalStorage();
+            };
+
+            const syncLocalStorage = () => {
+                localStorage.setItem('trip_itinerary', JSON.stringify(itineraryData.value));
+                localStorage.setItem('trip_bills', JSON.stringify(bills.value));
+                localStorage.setItem('trip_flights', JSON.stringify(flightData.value));
+                localStorage.setItem('trip_memos', JSON.stringify(memos.value));
+                localStorage.setItem('trip_group_names', JSON.stringify(groupNames.value));
+            };
+
+            let startTime = Date.now();
+            const updateSnow = () => {
+                const elapsed = Date.now() - startTime;
+                if(elapsed < 8000) { snowHeight.value = (elapsed/8000)*40; requestAnimationFrame(updateSnow); }
+                else { snowHeight.value = 40; showSnowman.value = true; }
+            };
 
             const handleSnowmanClick = () => {
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.8 }, colors: ['#ffffff', '#e0f2fe', '#bae6fd'] });
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.8 }, colors: ['#ffffff', '#bae6fd', '#3b82f6'] });
                 isDissipating.value = true;
-                setTimeout(() => { showSnowman.value = false; isDissipating.value = false; snowHeight.value = 0; startSnowingTimer(); }, 800);
+                setTimeout(() => { showSnowman.value = false; isDissipating.value = false; snowHeight.value = 0; startTime = Date.now(); updateSnow(); }, 600);
             };
 
-            let snowInterval;
-            const startSnowingTimer = () => {
-                if(snowInterval) clearInterval(snowInterval);
-                const start = Date.now();
-                snowInterval = setInterval(() => {
-                    const elapsed = (Date.now() - start) / 1000;
-                    if (elapsed <= 60) snowHeight.value = (elapsed / 60) * 100;
-                    else { showSnowman.value = true; clearInterval(snowInterval); }
-                }, 1000);
-            };
+            onMounted(() => {
+                updateSnow();
+                setInterval(() => {
+                    const id = Date.now() + Math.random();
+                    snowflakes.value.push({ id, style: { left: Math.random()*100+'vw', fontSize: '14px', animationDuration: '7s', opacity: 0.4 } });
+                    if(snowflakes.value.length > 20) snowflakes.value.shift();
+                }, 1200);
+            });
 
-            const createSnowflake = () => {
-                const id = Date.now() + Math.random();
-                snowflakes.value.push({ id, style: { left: Math.random()*100+'vw', fontSize: (Math.random()*10+10)+'px', opacity: Math.random()*0.4+0.4, animationDuration: (Math.random()*3+4)+'s' } });
-                setTimeout(() => snowflakes.value = snowflakes.value.filter(s => s.id !== id), 7000);
-            };
-
-            onMounted(() => { setInterval(createSnowflake, 400); startSnowingTimer(); });
-
-            return { 
-                activeTab, selectedDay, days, currentSchedule, weather, flightGroups, selectedFlightGroupId, currentFlightGroup,
-                showModal, modalType, modalTitle, form, openModal, saveData, deleteItem, openNaverMap,
-                snowflakes, snowHeight, showSnowman, snowmen, isDissipating, handleSnowmanClick,
-                bills, totalSpent, diaries
-            };
+            return { tabs, activeTab, selectedDay, days, currentTabName, selectedFlightGroup, groupNames, groupNameTemp, flightData, itineraryData, bills, totalExpensesKRW, totalExpensesTWD, categorySummaries, memos, newMemoContent, addMemo, deleteMemo, showModal, modalType, modalTitle, form, openModal, openGroupEditModal, editItem, saveData, deleteItem, snowHeight, showSnowman, isDissipating, snowflakes, handleSnowmanClick, weather, walletCategories, getCategoryColor };
         }
     }).mount('#app');
 </script>
-
 </body>
 </html>
